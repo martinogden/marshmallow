@@ -193,7 +193,7 @@ class Field(FieldABC):
         kwargs = {}
         for validator in self.validators:
             try:
-                r = validator(value)
+                r = self._call_validator(validator, value)
                 if not isinstance(validator, Validator) and r is False:
                     self.fail('validator_failed')
             except ValidationError as err:
@@ -204,6 +204,12 @@ class Field(FieldABC):
                     errors.extend(err.messages)
         if errors:
             raise ValidationError(errors, **kwargs)
+
+    def _call_validator(self, validator, value):
+        try:
+            return validator(value)
+        except TypeError:
+            return validator(value, self)
 
     # Hat tip to django-rest-framework.
     def fail(self, key, **kwargs):
